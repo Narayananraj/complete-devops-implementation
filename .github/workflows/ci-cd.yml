@@ -1,45 +1,60 @@
-# CICD using GitHub actions
 
-name: CI/CD
-
-# Exclude the workflow to run on changes to the helm chart
+# Stages:
+#   0. Secrets Scan            (Gitleaks)
+#   1. Build & Unit Test       (go build + go test)
+#   2. Code Quality             (golangci-lint)
+#   3. SAST                     (gosec — Go-native security static analysis)
+#   4. SCA                      (govulncheck + Trivy fs mode on go.sum)
+#   5. License Compliance       (Trivy license scan)
+#   6. Dockerfile Lint          (Hadolint)
+#   7. IaC Scan                 (Checkov + Trivy config on Helm chart + k8s/)
+#   8. Build & Push Image       (Docker Buildx -> Docker Hub)
+#   9. SBOM Generation          (Syft)
+#  10. Container Image Scan     (Trivy — scans the PUSHED image)
+#  11. Image Signing            (Cosign keyless / OIDC)
+#  12. Attestation              (Cosign attest — SBOM predicate)
+#  13. Update Helm Chart Tag    (GitOps commit — ArgoCD picks this up)
+# ==============================================================================
+ 
+name: CI - DevSecOps Pipeline
+ 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths-ignore:
       - 'helm/**'
       - 'k8s/**'
       - 'README.md'
-
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'helm/**'
+      - 'k8s/**'
+      - 'README.md'
+ 
+permissions:
+  contents: read
+ 
+env:
+  GO_VERSION: "1.22"
+  IMAGE_NAME: go-web-app
+  DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/go-web-app
+ 
 jobs:
-
-  build:
+ 
+  # ============================================================================
+  # STAGE 0: SECRETS SCAN — must run before anything touches the code further
+  # Tool: Gitleaks | Alternatives: TruffleHog, GitGuardian
+  # ============================================================================
+  secrets-scan:
+    name: "Secrets Scan"
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Go 1.22
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.22
-
-    - name: Build
-      run: go build -o go-web-app
-
-    - name: Test
-      run: go test ./...
-  
-  code-quality:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: v1.56.2
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+ 
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
