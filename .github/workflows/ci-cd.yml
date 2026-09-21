@@ -183,3 +183,24 @@ jobs:
           severity: "CRITICAL,HIGH"
           exit-code: "1"
           ignore-unfixed: true  
+  
+  # ============================================================================
+  # STAGE 5: LICENSE COMPLIANCE
+  # Tool: Trivy license scanner
+  # ============================================================================
+  license-scan:
+    name: "📜 License Compliance"
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - name: Trivy license scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          scanners: "license"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+   
