@@ -34,6 +34,8 @@ COPY --from=base /app/main .
 # Copy the static files from the previous stage
 COPY --from=base /app/static ./static
 
+USER nonroot:nonroot
+
 # Expose the port on which the application will run
 EXPOSE 8080
 
