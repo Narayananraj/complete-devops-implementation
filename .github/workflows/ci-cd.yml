@@ -219,5 +219,40 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
-          failure-threshold: warning
+          failure-threshold: warning 
+
+  # ============================================================================
+  # STAGE 7: IaC SCAN — Helm chart + raw k8s manifests + ingress config
+  # Tools: Checkov + Trivy config mode
+  # ============================================================================
+  iac-scan:
+    name: "🏗️ IaC Scan (Helm + K8s)"
+    runs-on: ubuntu-latest
+    needs: secrets-scan
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - name: Checkov - Helm chart
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: helm/go-web-app-chart
+          framework: helm
+          soft_fail: false
+          output_format: cli
+ 
+      - name: Checkov - raw K8s manifests
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: k8s/manifests
+          framework: kubernetes
+          soft_fail: false
+          output_format: cli
+ 
+      - name: Trivy config scan (Helm + K8s + Dockerfile + ingress)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "config"
+          scan-ref: "."
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"  
  
