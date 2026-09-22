@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 )
 
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -26,14 +27,21 @@ func contactPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
 	http.HandleFunc("/home", homePage)
 	http.HandleFunc("/courses", coursePage)
 	http.HandleFunc("/about", aboutPage)
 	http.HandleFunc("/contact", contactPage)
 
-	err := http.ListenAndServe("0.0.0.0:8080", nil)
-	if err != nil {
-		log.Fatal(err)
+	server := &http.Server{
+		Addr:              "0.0.0.0:8080",
+		Handler:           nil,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20,
 	}
+
+	log.Fatal(server.ListenAndServe())
+
 }
