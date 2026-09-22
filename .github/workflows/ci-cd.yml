@@ -204,3 +204,20 @@ jobs:
           format: "table"
           severity: "CRITICAL,HIGH"
    
+  # ============================================================================
+  # STAGE 6: DOCKERFILE LINT
+  # Tool: Hadolint
+  # ============================================================================
+  dockerfile-lint:
+    name: "📋 Dockerfile Lint"
+    runs-on: ubuntu-latest
+    needs: secrets-scan
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+ 
