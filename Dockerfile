@@ -8,8 +8,8 @@ FROM golang:1.25 AS base
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy go.mod AND go.sum for reproducible, verified dependency downloads
-COPY go.mod go.sum ./
+# go.sum* is optional — this repo currently has zero external deps
+COPY go.mod go.sum* ./
 
 # Download all the dependencies
 RUN go mod download
