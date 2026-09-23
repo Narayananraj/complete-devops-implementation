@@ -291,4 +291,29 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: true
-          sbom: true
+          sbom: true 
+
+  # ============================================================================
+  # STAGE 9: SBOM GENERATION (standalone artifact for audit trail)
+  # Tool: Syft
+  # ============================================================================
+  
+  sbom:
+    name: "Generate SBOM"
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Generate SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          image: "${{ env.DOCKERHUB_IMAGE }}:${{ github.run_id }}"
+          format: cyclonedx-json
+          output-file: "go-web-app-sbom.cyclonedx.json"
+ 
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-web-app-sbom
+          path: go-web-app-sbom.cyclonedx.json
+          retention-days: 90
