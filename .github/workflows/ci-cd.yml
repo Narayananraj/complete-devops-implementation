@@ -297,7 +297,7 @@ jobs:
   # STAGE 9: SBOM GENERATION (standalone artifact for audit trail)
   # Tool: Syft
   # ============================================================================
-  
+
   sbom:
     name: "Generate SBOM"
     runs-on: ubuntu-latest
@@ -316,4 +316,24 @@ jobs:
         with:
           name: go-web-app-sbom
           path: go-web-app-sbom.cyclonedx.json
-          retention-days: 90
+          retention-days: 90 
+
+  # ============================================================================
+  # STAGE 10: CONTAINER IMAGE VULNERABILITY SCAN (on the PUSHED image)
+  # Tool: Trivy image mode
+  # ============================================================================ 
+  
+  image-scan:
+    name: "🔬 Image Scan"
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Trivy scan of pushed image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.DOCKERHUB_IMAGE }}:${{ github.run_id }}"
+          format: "table"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+          ignore-unfixed: true
