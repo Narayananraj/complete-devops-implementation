@@ -1,0 +1,68 @@
+replicaCount: 2
+
+image:
+  repository: yourdockerhubusername/go-web-app  # replace with your actual Docker Hub username
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: false
+  name: ""
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  host: go-web-app.local  # add this to your local /etc/hosts pointing at the EC2 public IP
+  path: /
+  pathType: Prefix
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 128Mi
+
+probes:
+  liveness:
+    path: /
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readiness:
+    path: /
+    initialDelaySeconds: 3
+    periodSeconds: 5
+
+# Rolling update strategy — explicit, so it's a visible experiment point later
+# when we compare this against blue-green / canary via Argo Rollouts.
+deploymentStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0   # zero-downtime: never drop below replicaCount during rollout
+
+namespace: go-web-app
