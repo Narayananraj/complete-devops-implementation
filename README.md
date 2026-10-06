@@ -136,8 +136,5 @@ Documented here rather than silently fixed or ignored — this is itself part of
 - **Image pinned by mutable tag, not digest** (Checkov `CKV_K8S_43`): the tag is `github.run_id`, which is unique per build and never reused in practice, so this is functionally equivalent to digest-pinning today. True digest-pinning (resolving and templating the SHA into `values.yaml`) is a planned follow-up once an image-updater tool is introduced.
 - **`soft_fail: true` on the IaC scan stage**: kept permissive while the Helm chart findings were being triaged one by one. Flip to `exit-code: "1"` / `soft_fail: false` once the chart has been fully reviewed.
 
-## License
-
-MIT (adjust if this is not accurate for your use case).
 
 
